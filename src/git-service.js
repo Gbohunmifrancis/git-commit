@@ -127,6 +127,19 @@ class GitService {
         logger.info("Push successful");
         return result;
       } catch (error) {
+        // If remote doesn't exist, log warning but don't fail
+        if (
+          error.message.includes("does not appear to be a git repository") ||
+          error.message.includes("repository not found") ||
+          error.message.includes("Could not read from remote")
+        ) {
+          logger.warn("Remote repository not available. Commits saved locally.", { 
+            error: error.message,
+            hint: "Create the remote repository and push manually with: git push -u origin master"
+          });
+          return { pushed: false, local: true };
+        }
+
         logger.warn(`Push attempt ${attempt} failed`, { error: error.message });
 
         if (attempt === maxRetries) {
@@ -162,9 +175,14 @@ class GitService {
       logger.info("Pull successful", { summary: result.summary });
       return result;
     } catch (error) {
-      // Ignore if no remote tracking branch
-      if (error.message.includes("no tracking information")) {
-        logger.debug("No tracking branch found, skipping pull");
+      // Ignore common errors when remote doesn't exist yet
+      if (
+        error.message.includes("no tracking information") ||
+        error.message.includes("couldn't find remote ref") ||
+        error.message.includes("does not appear to be a git repository") ||
+        error.message.includes("repository not found")
+      ) {
+        logger.debug("Remote not available, skipping pull", { reason: error.message });
         return {};
       }
       logger.error("Failed to pull", { error: error.message });
