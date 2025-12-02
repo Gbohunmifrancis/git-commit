@@ -44,10 +44,15 @@ jobs:
           git config --global user.name "${{ github.actor }}"
           git config --global user.email "${{ github.actor }}@users.noreply.github.com"
 
+      - name: Get current branch
+        id: branch
+        run: echo "name=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
+
       - name: Run contribution generator
         env:
           GIT_USER_NAME: ${{ github.actor }}
           GIT_USER_EMAIL: ${{ github.actor }}@users.noreply.github.com
+          GIT_BRANCH: ${{ steps.branch.outputs.name }}
           MIN_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '1' }}
           MAX_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '5' }}
           LOG_LEVEL: info
@@ -55,7 +60,7 @@ jobs:
 
       - name: Push changes
         run: |
-          git push origin main
+          git push origin ${{ steps.branch.outputs.name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,5 +68,6 @@ jobs:
         run: |
           echo "## Contribution Summary" >> $GITHUB_STEP_SUMMARY
           echo "- Date: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ steps.branch.outputs.name }}" >> $GITHUB_STEP_SUMMARY
           echo "- Commits created: ${{ github.event.inputs.commit_count || '1-5' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
