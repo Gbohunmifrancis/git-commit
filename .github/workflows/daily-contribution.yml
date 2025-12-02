@@ -1,0 +1,67 @@
+# GitHub Actions Workflow for Daily Contributions
+# This workflow runs daily and creates contribution commits
+
+name: Daily Contribution
+
+on:
+  # Run daily at 9 AM UTC
+  schedule:
+    - cron: '0 9 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      commit_count:
+        description: 'Number of commits to create'
+        required: false
+        default: '3'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  contribute:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: Run contribution generator
+        env:
+          GIT_USER_NAME: ${{ github.actor }}
+          GIT_USER_EMAIL: ${{ github.actor }}@users.noreply.github.com
+          MIN_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '1' }}
+          MAX_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '5' }}
+          LOG_LEVEL: info
+        run: npm run once
+
+      - name: Push changes
+        run: |
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Contribution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Date: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- Commits created: ${{ github.event.inputs.commit_count || '1-5' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
