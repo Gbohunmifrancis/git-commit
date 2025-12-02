@@ -29,6 +29,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          ref: master
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,21 +42,13 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
 
-      - name: Get current branch
-        id: branch
-        run: |
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          echo "name=$BRANCH" >> $GITHUB_OUTPUT
-          echo "Detected branch: $BRANCH"
-
-      - name: Run contribution generator
+      - name: Create contributions
         env:
           GIT_USER_NAME: ${{ github.actor }}
           GIT_USER_EMAIL: ${{ github.actor }}@users.noreply.github.com
-          GIT_BRANCH: ${{ steps.branch.outputs.name }}
           MIN_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '1' }}
           MAX_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '5' }}
           SKIP_PUSH: "true"
@@ -63,17 +56,12 @@ jobs:
         run: npm run once
 
       - name: Push changes
-        run: |
-          BRANCH="${{ steps.branch.outputs.name }}"
-          echo "Pushing to branch: $BRANCH"
-          git push origin "$BRANCH"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git push origin master
 
       - name: Summary
         run: |
-          echo "## Contribution Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- Date: $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "- Branch: ${{ steps.branch.outputs.name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Commits created: ${{ github.event.inputs.commit_count || '1-5' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Triggered by: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Contribution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** master" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commits created:** ${{ github.event.inputs.commit_count || '1-5' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
