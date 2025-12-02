@@ -60,6 +60,7 @@ export const CONFIG = {
   app: {
     env: process.env.NODE_ENV || "development",
     dryRun: process.env.DRY_RUN === "true",
+    skipPush: process.env.SKIP_PUSH === "true",
     retryAttempts: parseInt(process.env.RETRY_ATTEMPTS) || 3,
     retryDelay: parseInt(process.env.RETRY_DELAY) || 1000,
   },

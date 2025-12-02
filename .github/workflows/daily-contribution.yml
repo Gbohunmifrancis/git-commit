@@ -46,7 +46,10 @@ jobs:
 
       - name: Get current branch
         id: branch
-        run: echo "name=$(git rev-parse --abbrev-ref HEAD)" >> $GITHUB_OUTPUT
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "name=$BRANCH" >> $GITHUB_OUTPUT
+          echo "Detected branch: $BRANCH"
 
       - name: Run contribution generator
         env:
@@ -55,12 +58,15 @@ jobs:
           GIT_BRANCH: ${{ steps.branch.outputs.name }}
           MIN_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '1' }}
           MAX_COMMITS_PER_DAY: ${{ github.event.inputs.commit_count || '5' }}
+          SKIP_PUSH: "true"
           LOG_LEVEL: info
         run: npm run once
 
       - name: Push changes
         run: |
-          git push origin ${{ steps.branch.outputs.name }}
+          BRANCH="${{ steps.branch.outputs.name }}"
+          echo "Pushing to branch: $BRANCH"
+          git push origin "$BRANCH"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

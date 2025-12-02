@@ -38,8 +38,12 @@ const runOnce = async () => {
     // Create today's contributions
     const results = await commitService.createTodayContributions();
 
-    // Push changes
-    await gitService.push();
+    // Push changes (unless SKIP_PUSH is set - useful for CI/CD)
+    if (CONFIG.app.skipPush) {
+      logger.info("Skipping push (SKIP_PUSH=true). Commits created locally.");
+    } else {
+      await gitService.push();
+    }
 
     logger.info("Single execution completed successfully", {
       commitsCreated: results.length,
@@ -71,8 +75,12 @@ const runBackfill = async () => {
     // Run backfill
     const stats = await commitService.backfillContributions(startDate, endDate);
 
-    // Push changes
-    await gitService.push();
+    // Push changes (unless SKIP_PUSH is set)
+    if (CONFIG.app.skipPush) {
+      logger.info("Skipping push (SKIP_PUSH=true). Commits created locally.");
+    } else {
+      await gitService.push();
+    }
 
     logger.info("Backfill completed successfully", stats);
 
