@@ -180,9 +180,11 @@ class GitService {
         error.message.includes("no tracking information") ||
         error.message.includes("couldn't find remote ref") ||
         error.message.includes("does not appear to be a git repository") ||
-        error.message.includes("repository not found")
+        error.message.includes("repository not found") ||
+        error.message.includes("unstaged changes") ||
+        error.message.includes("You have unstaged changes")
       ) {
-        logger.debug("Remote not available, skipping pull", { reason: error.message });
+        logger.debug("Remote not available or local changes, skipping pull", { reason: error.message });
         return {};
       }
       logger.error("Failed to pull", { error: error.message });
