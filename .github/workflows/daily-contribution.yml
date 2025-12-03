@@ -16,6 +16,10 @@ on:
         required: false
         default: '3'
 
+# Required for pushing commits
+permissions:
+  contents: write
+
 env:
   NODE_VERSION: '20'
 
